@@ -83,7 +83,6 @@ class ChecklistProvider extends ChangeNotifier {
   Future<void> loadItemsFromDb() async {
     final List<Map<String, dynamic>> maps =
         await _database?.query(checklistItemTable) ?? [];
-    print(maps);
     _items = {for (var item in maps) item[colId]: ChecklistItem.fromMap(item)};
     notifyListeners();
   }
