@@ -1,0 +1,37 @@
+{
+  "name": "flutter_docker",
+  "dockerFile": "Dockerfile",
+  "mounts": [
+    "source=/dev/bus/usb,target=/dev/bus/usb,type=bind"
+  ],
+  "runArgs": [
+    "--privileged",
+    "--network=bridge",
+    "--memory=6gb"
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dart-code.dart-code",
+        "dart-code.flutter"
+      ],
+      "settings": {
+        "terminal.integrated.profiles.linux": {
+          "zsh": {
+            "path": "zsh",
+            "icon": "terminal-linux"
+          }
+        },
+        "terminal.integrated.defaultProfile.linux": "zsh"
+      }
+    }
+  },
+  "remoteUser": "vscode",
+  "features": {
+    "ghcr.io/devcontainers-contrib/features/zsh-plugins:0": {
+      "plugins": "ssh-agent npm",
+      "omzPlugins": "https://github.com/zsh-users/zsh-autosuggestions",
+      "username": "vscode"
+    }
+  }
+}
