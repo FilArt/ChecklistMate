@@ -1,3 +1,4 @@
+import 'package:app/models/checklist.dart';
 import 'package:flutter/material.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:provider/provider.dart';
@@ -19,52 +20,8 @@ class ChecklistsScreen extends StatelessWidget {
       body: Consumer<ChecklistProvider>(
         builder: (ctx, checklistProvider, _) => ListView.builder(
           itemCount: checklistProvider.checklists.length,
-          itemBuilder: (ctx, i) => ListTile(
-            title: Text(checklistProvider.checklists.values.toList()[i].title),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => ChecklistScreen(
-                        checklistProvider.checklists.values.toList()[i].id)),
-              );
-            },
-            trailing: IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: const Text('Confirm Delete'),
-                      content: const Text(
-                          'Are you sure you want to delete this checklist?'),
-                      actions: <Widget>[
-                        TextButton(
-                          child: const Text('Cancel'),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                        TextButton(
-                          child: const Text('Delete'),
-                          onPressed: () {
-                            Provider.of<ChecklistProvider>(context,
-                                    listen: false)
-                                .removeChecklist(checklistProvider
-                                    .checklists.values
-                                    .toList()[i]
-                                    .id);
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
-            ),
-          ),
+          itemBuilder: (ctx, i) =>
+              _buildChecklist(checklistProvider, i, context),
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -102,6 +59,51 @@ class ChecklistsScreen extends StatelessWidget {
                                 .currentState?.fields['checklist']?.value);
                         Navigator.of(ctx).pop();
                       }
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  ListTile _buildChecklist(
+      ChecklistProvider checklistProvider, int i, BuildContext context) {
+    Checklist checklist = checklistProvider.checklists.values.toList()[i];
+    return ListTile(
+      title: Text(checklist.title),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ChecklistScreen(checklist)),
+        );
+      },
+      trailing: IconButton(
+        icon: const Icon(Icons.delete),
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Confirm Delete'),
+                content: const Text(
+                    'Are you sure you want to delete this checklist?'),
+                actions: <Widget>[
+                  TextButton(
+                    child: const Text('Cancel'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  TextButton(
+                    child: const Text('Delete'),
+                    onPressed: () {
+                      Provider.of<ChecklistProvider>(context, listen: false)
+                          .removeChecklist(checklist.id);
+                      Navigator.of(context).pop();
                     },
                   ),
                 ],

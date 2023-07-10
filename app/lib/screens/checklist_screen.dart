@@ -1,25 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
+import '../models/checklist.dart';
 import '../providers/checklist_provider.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 
 class ChecklistScreen extends StatelessWidget {
-  final int checklistId;
+  final Checklist checklist;
   final _formKey = GlobalKey<FormBuilderState>();
 
-  ChecklistScreen(this.checklistId, {super.key});
+  ChecklistScreen(this.checklist, {super.key});
 
   @override
   Widget build(BuildContext context) {
+    String checklistTitle = checklist.title;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Checklist'),
+        title: Text('Checklist $checklistTitle'),
       ),
       body: Consumer<ChecklistProvider>(
         builder: (ctx, checklistProvider, _) => ListView.builder(
           itemCount: checklistProvider.items.values
-              .where((item) => item.checklistId == checklistId)
+              .where((item) => item.checklistId == checklist.id)
               .length,
           itemBuilder: (ctx, i) {
             var item = checklistProvider.items.values.toList()[i];
@@ -101,7 +103,7 @@ class ChecklistScreen extends StatelessWidget {
                         Provider.of<ChecklistProvider>(context, listen: false)
                             .addItem(
                                 _formKey.currentState?.fields['item']?.value,
-                                checklistId);
+                                checklist.id);
                         Navigator.of(ctx).pop();
                       }
                     },
