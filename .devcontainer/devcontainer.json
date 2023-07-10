@@ -2,7 +2,8 @@
   "name": "flutter_docker",
   "dockerFile": "Dockerfile",
   "mounts": [
-    "source=/dev/bus/usb,target=/dev/bus/usb,type=bind"
+    "source=/dev/bus/usb,target=/dev/bus/usb,type=bind",
+    "source=/home/art/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached"
   ],
   "runArgs": [
     "--privileged",
