@@ -1,117 +1,66 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import '../models/checklist.dart';
 import '../models/checklist_item.dart';
+import 'package:flutter/foundation.dart';
+import 'package:hive/hive.dart';
 
 class ChecklistProvider extends ChangeNotifier {
-  Database? _database;
-  Map<int, Checklist> _checklists = {};
-  Map<int, ChecklistItem> _items = {};
+  late Box<Checklist>? checklistBox;
+  late Box<ChecklistItem> itemBox;
 
-  String checklistTable = 'Checklists';
-  String checklistItemTable = 'ChecklistItems';
-  String colId = 'id';
-  String colTitle = 'title';
-  String colChecklistId = 'checklistId';
-  String colIsDone = 'isDone';
-
-  ChecklistProvider() {
-    _initDb();
+  ChecklistProvider({Box<Checklist>? checklistBox}) {
+    _openBoxes();
   }
 
-  Future<void> _initDb() async {
-    sqfliteFfiInit();
-    var databaseFactory = databaseFactoryFfi;
-    Directory directory = await getApplicationDocumentsDirectory();
-    String path = join(directory.path, 'checklist.db');
-
-    // File file = File(path);
-    // await file.delete();
-
-    _database = await databaseFactory.openDatabase(path,
-        options: OpenDatabaseOptions(
-            version: 2,
-            onCreate: (Database db, int version) async {
-              await db.execute('''
-        CREATE TABLE $checklistTable(
-          $colId INTEGER PRIMARY KEY AUTOINCREMENT,
-          $colTitle TEXT
-        )
-      ''');
-              await db.execute('''
-        CREATE TABLE $checklistItemTable(
-          $colId INTEGER PRIMARY KEY AUTOINCREMENT,
-          $colChecklistId INTEGER NOT NULL,
-          $colTitle TEXT,
-          $colIsDone INTEGER
-        )
-      ''');
-            }));
-    loadChecklistsFromDb();
-    loadItemsFromDb();
-  }
-
-  Map<int, Checklist> get checklists {
-    return {..._checklists};
-  }
-
-  Map<int, ChecklistItem> get items {
-    return {..._items};
-  }
-
-  Future<void> addChecklist(String title) async {
-    await _database?.insert(checklistTable, {colTitle: title});
-    loadChecklistsFromDb();
-  }
-
-  Future<void> addItem(String title, int checklistId) async {
-    await _database?.insert(
-        checklistItemTable, {colTitle: title, colChecklistId: checklistId});
-    loadItemsFromDb();
-  }
-
-  Future<void> loadChecklistsFromDb() async {
-    final List<Map<String, dynamic>> maps =
-        await _database?.query(checklistTable) ?? [];
-    _checklists = {for (var item in maps) item[colId]: Checklist.fromMap(item)};
+  Future<void> _openBoxes() async {
+    checklistBox = checklistBox ?? await Hive.openBox<Checklist>('checklists');
+    itemBox = await Hive.openBox<ChecklistItem>('items');
     notifyListeners();
   }
 
-  Future<void> loadItemsFromDb() async {
-    final List<Map<String, dynamic>> maps =
-        await _database?.query(checklistItemTable) ?? [];
-    _items = {for (var item in maps) item[colId]: ChecklistItem.fromMap(item)};
+  List<Checklist> get checklists => checklistBox.values.toList();
+
+  List<ChecklistItem> get items => itemBox.values.toList();
+
+  Future<void> addChecklist(Checklist checklist) async {
+    await checklistBox.put(checklist.id, checklist);
     notifyListeners();
   }
 
-  Future<void> updateChecklistItem(int id, Map<String, dynamic> updates) async {
-    await _database?.update(
-      checklistItemTable,
-      updates,
-      where: '$colId = ?',
-      whereArgs: [id],
-    );
-    loadItemsFromDb();
+  Future<void> addItem(String? checklistId, String? title, bool? isDone) async {
+    if (!checklistBox.containsKey(checklistId)) {
+      throw Exception('checklist with id=$checklistId not found');
+    }
+    if (checklistId == null) throw Exception('checklistId cannot be null');
+
+    var item = ChecklistItem(
+        checklistId: checklistId, title: title ?? '', isDone: isDone ?? false);
+    await itemBox.put(item.id, item);
+    notifyListeners();
   }
 
-  Future<void> removeChecklist(int id) async {
-    await _database?.delete(
-      checklistTable,
-      where: '$colId = ?',
-      whereArgs: [id],
-    );
-    loadChecklistsFromDb();
+  Future<void> updateChecklistItem(String? id,
+      {String? title, String? checklistId, bool isDone = false}) async {
+    if (id == null) return;
+    ChecklistItem? checklistItem = itemBox.get(id);
+    if (checklistItem == null) throw Exception('not found');
+    var newChecklistItem = ChecklistItem(
+        checklistId: checklistId ?? checklistItem.checklistId,
+        title: title ?? checklistItem.title,
+        isDone: isDone);
+    await itemBox.put(id, newChecklistItem);
+    notifyListeners();
   }
 
-  Future<void> removeChecklistItem(int id) async {
-    await _database?.delete(
-      checklistItemTable,
-      where: '$colId = ?',
-      whereArgs: [id],
-    );
-    loadItemsFromDb();
+  Future<void> removeChecklist(String? id) async {
+    if (id == null) return;
+    await checklistBox.delete(id);
+    notifyListeners();
+  }
+
+  Future<void> removeChecklistItem(String? id) async {
+    if (id == null) return;
+    await itemBox.delete(id);
+    notifyListeners();
   }
 }

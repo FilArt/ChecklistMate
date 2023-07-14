@@ -72,7 +72,7 @@ class ChecklistsScreen extends StatelessWidget {
 
   ListTile _buildChecklist(
       ChecklistProvider checklistProvider, int i, BuildContext context) {
-    Checklist checklist = checklistProvider.checklists.values.toList()[i];
+    Checklist checklist = checklistProvider.checklists[i];
     return ListTile(
       title: Text(checklist.title),
       onTap: () {

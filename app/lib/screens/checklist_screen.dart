@@ -20,18 +20,17 @@ class ChecklistScreen extends StatelessWidget {
       ),
       body: Consumer<ChecklistProvider>(
         builder: (ctx, checklistProvider, _) => ListView.builder(
-          itemCount: checklistProvider.items.values
+          itemCount: checklistProvider.items
               .where((item) => item.checklistId == checklist.id)
               .length,
           itemBuilder: (ctx, i) {
-            var item = checklistProvider.items.values.toList()[i];
+            var item = checklistProvider.items[i];
             return ListTile(
               leading: Checkbox(
                 value: item.isDone,
                 onChanged: (bool? isDone) {
                   Provider.of<ChecklistProvider>(context, listen: false)
-                      .updateChecklistItem(
-                          item.id, {'isDone': isDone == true ? 1 : 0});
+                      .updateChecklistItem(item.id);
                 },
               ),
               title: Text(item.title),
@@ -102,8 +101,9 @@ class ChecklistScreen extends StatelessWidget {
                       if (_formKey.currentState?.saveAndValidate() ?? false) {
                         Provider.of<ChecklistProvider>(context, listen: false)
                             .addItem(
+                                checklist.id,
                                 _formKey.currentState?.fields['item']?.value,
-                                checklist.id);
+                                false);
                         Navigator.of(ctx).pop();
                       }
                     },
